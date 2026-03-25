@@ -183,6 +183,11 @@ textarea{resize:vertical;min-height:85px;line-height:1.5}
             <label>¿Cuál asignatura o espacio?</label>
             <input type="text" id="txt-asig-otra" placeholder="Especifica...">
           </div>
+          <div class="fg hidden" id="grp-fecha">
+            <label>Fecha de la acción</label>
+            <input type="date" id="sel-fecha" max="">
+            <div style="font-size:11px;color:var(--muted);margin-top:4px">Por defecto es hoy. Cámbiala si el hecho ocurrió en otro día.</div>
+          </div>
           <div class="fg hidden" id="grp-bloque">
             <label>Bloque / Hora</label>
             <select id="sel-bloque">
@@ -501,7 +506,7 @@ const getAnots=()=>DB.get('anota_anots',[]);
 const setAnots=a=>DB.set('anota_anots',a);
 
 let CU=null, lRol='profesor';
-let FS={curso:'',alumno:'',asig:'',bloque:'',tipo:'',grav:'',accion:'',esOtra:false};
+let FS={curso:'',alumno:'',asig:'',bloque:'',fecha:'',tipo:'',grav:'',accion:'',esOtra:false};
 
 function switchLTab(r){lRol=r;document.getElementById('ltab-prof').classList.toggle('active',r==='profesor');document.getElementById('ltab-adm').classList.toggle('active',r==='admin')}
 function doLogin(){
@@ -540,11 +545,17 @@ function onCursoChange(){
   const c=document.getElementById('sel-curso').value;
   FS.curso=c;FS.alumno='';
   const ga=document.getElementById('grp-alumno'),sa=document.getElementById('sel-alumno'),gas=document.getElementById('grp-asig');
-  if(!c){ga.classList.add('hidden');gas.classList.add('hidden');document.getElementById('grp-bloque').classList.add('hidden');return}
+  if(!c){ga.classList.add('hidden');gas.classList.add('hidden');document.getElementById('grp-bloque').classList.add('hidden');document.getElementById('grp-fecha').classList.add('hidden');return}
   sa.innerHTML='<option value="">— Selecciona —</option>';
   (ALUMNOS[c]||[]).forEach(a=>sa.appendChild(new Option(a,a)));
   sa.onchange=()=>FS.alumno=sa.value;
-  ga.classList.remove('hidden');gas.classList.remove('hidden');document.getElementById('grp-bloque').classList.remove('hidden');
+  ga.classList.remove('hidden');gas.classList.remove('hidden');
+  document.getElementById('grp-bloque').classList.remove('hidden');
+  document.getElementById('grp-fecha').classList.remove('hidden');
+  // Set today as default, max = today
+  const hoy=new Date().toISOString().slice(0,10);
+  const sf=document.getElementById('sel-fecha');
+  sf.value=hoy; sf.max=hoy;
 }
 
 function showPaso(id){
@@ -559,12 +570,12 @@ function updateDots(act,tot){
 }
 
 function resetForm(){
-  FS={curso:'',alumno:'',asig:'',bloque:'',tipo:'',grav:'',accion:'',esOtra:false};
+  FS={curso:'',alumno:'',asig:'',bloque:'',fecha:'',tipo:'',grav:'',accion:'',esOtra:false};
   showPaso('1');updateDots(1,1);
   ['chip-pos','chip-neg','chip-neu','chip-com'].forEach(id=>document.getElementById(id).className='chip');
   ['gchip-leve','gchip-grave','gchip-muyg'].forEach(id=>document.getElementById(id).className='gchip');
   ['sel-curso','sel-alumno','sel-asig','sel-bloque','txt-asig-otra','txt-pos','txt-com','txt-desc','txt-neg-otra','txt-neu-otra'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
-  ['grp-alumno','grp-asig','grp-asig-otra','grp-bloque','otra-neg','otra-neu'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  ['grp-alumno','grp-asig','grp-asig-otra','grp-bloque','grp-fecha','otra-neg','otra-neu'].forEach(id=>document.getElementById(id).classList.add('hidden'));
 }
 
 // Asignatura "Otro"
@@ -582,6 +593,7 @@ function irPaso(p){
     if(!asigVal){toast('Selecciona la asignatura o espacio','err');return}
     FS.asig=asigVal==='Otro'?('Otro: '+(document.getElementById('txt-asig-otra').value.trim()||'no especificado')):asigVal;
     FS.bloque=document.getElementById('sel-bloque').value||'Sin bloque específico';
+    FS.fecha=document.getElementById('sel-fecha').value||new Date().toISOString().slice(0,10);
     updateDots(2,4);showPaso('2');return;
   }
   if(p===3){
@@ -671,7 +683,8 @@ function guardar(){
   else if(FS.tipo==='comentario') desc=document.getElementById('txt-com').value.trim();
   else desc=document.getElementById('txt-desc').value.trim();
   if(!desc){toast('Escribe una descripción','err');return}
-  const a={id:Date.now(),fecha:new Date().toISOString(),profesor:CU.name,profUser:CU.user,curso:FS.curso,alumno:FS.alumno,asig:FS.asig,bloque:FS.bloque||'',tipo:FS.tipo,grav:FS.grav||null,accion:FS.accion,desc};
+  const fechaGuardar=FS.fecha?new Date(FS.fecha+'T'+new Date().toTimeString().slice(0,8)).toISOString():new Date().toISOString();
+  const a={id:Date.now(),fecha:fechaGuardar,profesor:CU.name,profUser:CU.user,curso:FS.curso,alumno:FS.alumno,asig:FS.asig,bloque:FS.bloque||'',tipo:FS.tipo,grav:FS.grav||null,accion:FS.accion,desc};
   // Guardar local
   const lista=getAnots();lista.push(a);setAnots(lista);
   // Enviar a Google Sheets si está configurado
