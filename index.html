@@ -135,6 +135,7 @@ textarea{resize:vertical;min-height:85px;line-height:1.5}
     <button class="btn btn-primary mt12" onclick="doLogin()">Ingresar →</button>
     
   </div>
+<div style="text-align:center;padding:12px 20px;font-size:12px;color:var(--muted);border-top:1px solid var(--border);background:var(--surface)">En caso de presentar algún problema, comunicarse con <a href="mailto:adrian.maldonado@almaymente.cl" style="color:var(--accent);text-decoration:none">Adrián Maldonado — adrian.maldonado@almaymente.cl</a></div>
 </div>
 
 <div id="screen-app" class="app hidden">
@@ -912,7 +913,7 @@ function downloadReport(filtroAlumno){
       <td style="font-size:12px">${a.profesor}</td></tr>`;
   });
   html+=`</table>
-  <footer>Anota. — Sistema de Anotaciones Escolares · ¿Problemas? Contacta a Adrián Maldonado A. en adrian.maldonado@gmail.com</footer>
+  <footer>Anota. — Sistema de Anotaciones Escolares · En caso de presentar algún problema, comunicarse con Adrián Maldonado — adrian.maldonado@almaymente.cl</footer>
   </body></html>`;
 
   const blob=new Blob([html],{type:'text/html'});
